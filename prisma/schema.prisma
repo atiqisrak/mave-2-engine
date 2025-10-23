@@ -34,8 +34,9 @@ model Organization {
     deletedAt DateTime? @map("deleted_at")
 
     // Relations
-    users User[]
-    roles Role[]
+    users       User[]
+    roles       Role[]
+    invitations Invitation[]
 
     @@map("organizations")
 }
@@ -98,8 +99,10 @@ model User {
     deletedAt DateTime? @map("deleted_at")
 
     // Relations
-    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    userRoles    UserRole[]
+    organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    userRoles           UserRole[]
+    invitationsSent     Invitation[] @relation("InvitedBy")
+    invitationsAccepted Invitation[] @relation("AcceptedBy")
 
     @@unique([organizationId, email])
     @@unique([organizationId, username])
@@ -196,6 +199,38 @@ model UserRole {
     @@index([roleId, isActive])
     @@index([expiresAt])
     @@map("user_roles")
+}
+
+// ============================================
+// INVITATIONS
+// ============================================
+
+model Invitation {
+    id             String    @id @default(uuid()) @db.Uuid
+    organizationId String    @map("organization_id") @db.Uuid
+    email          String? // null for shareable links
+    token          String    @unique
+    roleId         String?   @map("role_id") @db.Uuid // role to assign on acceptance
+    invitedBy      String    @map("invited_by") @db.Uuid
+    acceptedBy     String?   @map("accepted_by") @db.Uuid
+    acceptedAt     DateTime? @map("accepted_at")
+    expiresAt      DateTime  @map("expires_at")
+    status         String    @default("pending") // pending, accepted, expired, revoked
+    type           String    @default("email") // email, link
+    maxUses        Int?      @map("max_uses") // for shareable links
+    usedCount      Int       @default(0) @map("used_count")
+    metadata       Json      @default("{}")
+    createdAt      DateTime  @default(now()) @map("created_at")
+
+    // Relations
+    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    inviter      User         @relation("InvitedBy", fields: [invitedBy], references: [id])
+    accepter     User?        @relation("AcceptedBy", fields: [acceptedBy], references: [id])
+
+    @@index([organizationId, status])
+    @@index([token])
+    @@index([email, status])
+    @@map("invitations")
 }
 
 // Permissions (System-wide)

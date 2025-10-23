@@ -1,12 +1,19 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 
 @InputType()
 export class RegisterInput {
-  @Field()
+  @Field({ nullable: true })
+  @ValidateIf((o) => !o.organizationSlug)
   @IsUUID()
   @IsNotEmpty()
-  organizationId: string;
+  organizationId?: string;
+
+  @Field({ nullable: true })
+  @ValidateIf((o) => !o.organizationId)
+  @IsString()
+  @IsNotEmpty()
+  organizationSlug?: string;
 
   @Field()
   @IsEmail()

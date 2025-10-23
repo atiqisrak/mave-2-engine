@@ -17,6 +17,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { EmailModule } from './modules/email/email.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { EmailModule } from './modules/email/email.module';
     AuthModule,
     RolesModule,
     PermissionsModule,
+    InvitationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

@@ -56,4 +56,26 @@ export class OrganizationsResolver {
   restoreOrganization(@Args('id', { type: () => String }) id: string) {
     return this.organizationsService.restore(id);
   }
+
+  // Subdomain-related queries
+  @Query(() => Boolean)
+  checkSubdomainAvailability(@Args('subdomain', { type: () => String }) subdomain: string) {
+    return this.organizationsService.checkSubdomainAvailability(subdomain);
+  }
+
+  @Query(() => Organization, { nullable: true })
+  getOrganizationBySubdomain(@Args('subdomain', { type: () => String }) subdomain: string) {
+    return this.organizationsService.getOrganizationBySubdomain(subdomain);
+  }
+
+  @Query(() => [String])
+  suggestAlternativeSubdomains(@Args('subdomain', { type: () => String }) subdomain: string) {
+    return this.organizationsService.suggestAlternativeSubdomains(subdomain);
+  }
+
+  @Query(() => String, { nullable: true })
+  async validateSubdomain(@Args('subdomain', { type: () => String }) subdomain: string) {
+    const validation = await this.organizationsService.validateSubdomain(subdomain);
+    return validation.isValid ? null : validation.error;
+  }
 }

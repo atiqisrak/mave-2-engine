@@ -197,4 +197,83 @@ export class EmailService {
       },
     });
   }
+
+  async sendInvitationEmail(
+    to: string,
+    inviterName: string,
+    orgName: string,
+    token: string,
+    expiresAt: Date,
+  ) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Invitation Email', to);
+      return;
+    }
+
+    const baseUrl = this.configService.get('APP_URL', 'http://localhost:3000');
+    const invitationUrl = `${baseUrl}/accept-invitation?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to,
+      subject: `You're invited to join ${orgName}`,
+      template: 'invitation-email',
+      context: {
+        inviterName,
+        orgName,
+        invitationUrl,
+        expiresAt: expiresAt.toLocaleDateString(),
+        appName: 'Mave CMS',
+      },
+    });
+  }
+
+  async sendInvitationAcceptedEmail(
+    to: string,
+    acceptedUserName: string,
+    orgName: string,
+  ) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Invitation Accepted Email', to);
+      return;
+    }
+
+    await this.mailerService.sendMail({
+      to,
+      subject: `${acceptedUserName} accepted your invitation`,
+      template: 'invitation-accepted',
+      context: {
+        acceptedUserName,
+        orgName,
+        appName: 'Mave CMS',
+      },
+    });
+  }
+
+  async sendOrgCreationConfirmationEmail(
+    to: string,
+    userName: string,
+    orgName: string,
+    subdomain: string,
+  ) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Organization Creation Confirmation', to);
+      return;
+    }
+
+    const baseUrl = this.configService.get('APP_URL', 'http://localhost:3000');
+    const orgUrl = `${baseUrl}/${subdomain}`;
+
+    await this.mailerService.sendMail({
+      to,
+      subject: `Welcome to ${orgName} - Organization Created`,
+      template: 'org-creation-confirmation',
+      context: {
+        userName,
+        orgName,
+        subdomain,
+        orgUrl,
+        appName: 'Mave CMS',
+      },
+    });
+  }
 }

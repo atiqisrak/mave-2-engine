@@ -4,6 +4,8 @@ import { AuthService } from './auth.service';
 import { AuthResponse } from './entities/auth-response.entity';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
+import { RegisterWithOrganizationInput } from './dto/register-with-organization.input';
+import { RegisterWithInvitationInput } from './dto/register-with-invitation.input';
 import { RefreshTokenInput } from './dto/refresh-token.input';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -17,6 +19,18 @@ export class AuthResolver {
   @Mutation(() => AuthResponse)
   async register(@Args('input') registerInput: RegisterInput) {
     return this.authService.register(registerInput);
+  }
+
+  @Public()
+  @Mutation(() => AuthResponse)
+  async registerWithOrganization(@Args('input') registerInput: RegisterWithOrganizationInput) {
+    return this.authService.registerWithOrganization(registerInput);
+  }
+
+  @Public()
+  @Mutation(() => AuthResponse)
+  async registerWithInvitation(@Args('input') registerInput: RegisterWithInvitationInput) {
+    return this.authService.registerWithInvitation(registerInput);
   }
 
   @Public()
@@ -42,10 +56,11 @@ export class AuthResolver {
   @Public()
   @Mutation(() => Boolean)
   async requestPasswordReset(
-    @Args('organizationId') organizationId: string,
+    @Args('organizationId', { nullable: true }) organizationId: string,
+    @Args('organizationSlug', { nullable: true }) organizationSlug: string,
     @Args('email') email: string,
   ) {
-    await this.authService.requestPasswordReset(organizationId, email);
+    await this.authService.requestPasswordReset(organizationId || organizationSlug, email);
     return true;
   }
 

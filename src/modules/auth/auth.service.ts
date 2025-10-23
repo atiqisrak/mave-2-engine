@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +14,8 @@ import { TwoFactorService } from './services/two-factor.service';
 import { EmailService } from '../email/email.service';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
+import { RegisterWithOrganizationInput } from './dto/register-with-organization.input';
+import { RegisterWithInvitationInput } from './dto/register-with-invitation.input';
 import { JwtPayload, JwtTokens } from './interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -27,9 +30,33 @@ export class AuthService {
   ) {}
 
   async register(registerInput: RegisterInput) {
+    // Resolve organization ID from slug if provided
+    let organizationId = registerInput.organizationId;
+    
+    if (registerInput.organizationSlug && !organizationId) {
+      const organization = await this.prisma.organization.findUnique({
+        where: { slug: registerInput.organizationSlug },
+        select: { id: true, isActive: true },
+      });
+
+      if (!organization) {
+        throw new NotFoundException('Organization not found');
+      }
+
+      if (!organization.isActive) {
+        throw new NotFoundException('Organization is not active');
+      }
+
+      organizationId = organization.id;
+    }
+
+    if (!organizationId) {
+      throw new NotFoundException('Organization ID or slug is required');
+    }
+
     // Verify organization exists
     const organization = await this.prisma.organization.findUnique({
-      where: { id: registerInput.organizationId },
+      where: { id: organizationId },
     });
 
     if (!organization || organization.deletedAt) {
@@ -38,7 +65,7 @@ export class AuthService {
 
     // Create user
     const user = await this.usersService.create({
-      organizationId: registerInput.organizationId,
+      organizationId: organizationId,
       email: registerInput.email,
       username: registerInput.username,
       password: registerInput.password,
@@ -63,7 +90,226 @@ export class AuthService {
     };
   }
 
+  async registerWithOrganization(registerInput: RegisterWithOrganizationInput) {
+    // Check if email already exists globally
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: registerInput.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Create organization
+    const organization = await this.prisma.organization.create({
+      data: {
+        name: registerInput.orgName,
+        slug: registerInput.orgSlug,
+        domain: registerInput.orgDomain,
+        plan: 'free',
+        settings: {},
+        branding: {},
+      },
+    });
+
+    // Create user as organization creator
+    const user = await this.usersService.create({
+      organizationId: organization.id,
+      email: registerInput.email,
+      username: registerInput.username,
+      password: registerInput.password,
+      firstName: registerInput.firstName,
+      lastName: registerInput.lastName,
+    });
+
+    // Assign admin role to the creator
+    try {
+      const adminRole = await this.prisma.role.findFirst({
+        where: {
+          slug: 'admin',
+          organizationId: organization.id,
+        },
+      });
+
+      if (adminRole) {
+        await this.prisma.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: adminRole.id,
+            scope: 'global',
+            isActive: true,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to assign admin role:', error);
+      // Don't fail registration if role assignment fails
+    }
+
+    // Send organization creation confirmation email
+    try {
+      await this.emailService.sendOrgCreationConfirmationEmail(
+        user.email,
+        user.firstName || 'User',
+        organization.name,
+        organization.domain || organization.slug,
+      );
+    } catch (error) {
+      console.error('Failed to send org creation email:', error);
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user);
+
+    return {
+      ...tokens,
+      user,
+      organization,
+    };
+  }
+
+  async registerWithInvitation(registerInput: RegisterWithInvitationInput) {
+    // Validate invitation token
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { token: registerInput.token },
+      include: {
+        organization: true,
+        inviter: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Invalid invitation token');
+    }
+
+    if (invitation.status !== 'pending') {
+      throw new BadRequestException('Invitation has already been used or revoked');
+    }
+
+    if (new Date() > invitation.expiresAt) {
+      throw new BadRequestException('Invitation has expired');
+    }
+
+    if (invitation.type === 'link' && invitation.maxUses && invitation.usedCount >= invitation.maxUses) {
+      throw new BadRequestException('Invitation link has reached maximum uses');
+    }
+
+    // Check if user already exists in this organization
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        organizationId_email: {
+          organizationId: invitation.organizationId,
+          email: registerInput.email,
+        },
+      },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists in the organization');
+    }
+
+    // Create user in the invitation's organization
+    const user = await this.usersService.create({
+      organizationId: invitation.organizationId,
+      email: registerInput.email,
+      username: registerInput.username,
+      password: registerInput.password,
+      firstName: registerInput.firstName,
+      lastName: registerInput.lastName,
+    });
+
+    // Mark invitation as accepted
+    await this.prisma.invitation.update({
+      where: { id: invitation.id },
+      data: {
+        status: 'accepted',
+        acceptedBy: user.id,
+        acceptedAt: new Date(),
+        usedCount: invitation.usedCount + 1,
+      },
+    });
+
+    // Assign role if specified in invitation
+    if (invitation.roleId) {
+      try {
+        await this.prisma.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: invitation.roleId,
+            scope: 'global',
+            assignedBy: invitation.invitedBy,
+            assignedReason: 'Invitation acceptance',
+            isActive: true,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to assign role from invitation:', error);
+        // Don't fail registration if role assignment fails
+      }
+    }
+
+    // Send welcome email
+    try {
+      await this.emailService.sendWelcomeEmail(user.email, user.firstName || 'User');
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+    }
+
+    // Send notification to inviter
+    try {
+      if (invitation.inviter) {
+        await this.emailService.sendInvitationAcceptedEmail(
+          invitation.inviter.email,
+          `${user.firstName} ${user.lastName}`,
+          invitation.organization.name,
+        );
+      }
+    } catch (error) {
+      console.error('Failed to send acceptance notification:', error);
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user);
+
+    return {
+      ...tokens,
+      user,
+      organization: invitation.organization,
+    };
+  }
+
   async login(loginInput: LoginInput, ipAddress?: string) {
+    // Resolve organization ID from slug if provided
+    let organizationId = loginInput.organizationId;
+    
+    if (loginInput.organizationSlug && !organizationId) {
+      const organization = await this.prisma.organization.findUnique({
+        where: { slug: loginInput.organizationSlug },
+        select: { id: true, isActive: true },
+      });
+
+      if (!organization) {
+        throw new UnauthorizedException('Invalid organization');
+      }
+
+      if (!organization.isActive) {
+        throw new UnauthorizedException('Organization is not active');
+      }
+
+      organizationId = organization.id;
+    }
+
+    if (!organizationId) {
+      throw new UnauthorizedException('Organization ID or slug is required');
+    }
+
     // Find user by email or username
     let user;
     const isEmail = loginInput.emailOrUsername.includes('@');
@@ -73,7 +319,7 @@ export class AuthService {
         user = await this.prisma.user.findUnique({
           where: {
             organizationId_email: {
-              organizationId: loginInput.organizationId,
+              organizationId: organizationId,
               email: loginInput.emailOrUsername,
             },
           },
@@ -82,7 +328,7 @@ export class AuthService {
         user = await this.prisma.user.findUnique({
           where: {
             organizationId_username: {
-              organizationId: loginInput.organizationId,
+              organizationId: organizationId,
               username: loginInput.emailOrUsername,
             },
           },
@@ -246,8 +492,31 @@ export class AuthService {
     return { success: true, message: 'Logged out successfully' };
   }
 
-  async requestPasswordReset(organizationId: string, email: string) {
+  async requestPasswordReset(organizationIdOrSlug: string, email: string) {
     try {
+      // Check if it's a UUID (organization ID) or slug
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organizationIdOrSlug);
+      
+      let organizationId = organizationIdOrSlug;
+      
+      if (!isUUID) {
+        // It's a slug, resolve to organization ID
+        const organization = await this.prisma.organization.findUnique({
+          where: { slug: organizationIdOrSlug },
+          select: { id: true, isActive: true },
+        });
+
+        if (!organization) {
+          throw new NotFoundException('Organization not found');
+        }
+
+        if (!organization.isActive) {
+          throw new NotFoundException('Organization is not active');
+        }
+
+        organizationId = organization.id;
+      }
+
       const user = await this.usersService.findByEmail(organizationId, email);
 
       // Generate reset token

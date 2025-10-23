@@ -1,5 +1,6 @@
 import { ObjectType, Field } from '@nestjs/graphql';
 import { User } from '../../users/entities/user.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 @ObjectType()
 export class AuthResponse {
@@ -11,6 +12,9 @@ export class AuthResponse {
 
   @Field(() => User)
   user: User;
+
+  @Field(() => Organization, { nullable: true })
+  organization?: Organization;
 
   @Field(() => Boolean, { nullable: true })
   requiresTwoFactor: boolean | null;

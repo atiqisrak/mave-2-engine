@@ -15,9 +15,28 @@ async function bootstrap() {
   );
 
   // CORS
+  const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['*'];
+  
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in the allowed list
+      if (corsOrigins.includes('*') || corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Log the rejected origin for debugging
+      console.log('CORS blocked origin:', origin);
+      console.log('Allowed origins:', corsOrigins);
+      
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    exposedHeaders: ['Authorization'],
   });
 
   // Global prefix

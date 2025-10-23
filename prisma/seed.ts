@@ -426,7 +426,103 @@ async function main() {
   }
   console.log(`✅ Seeded ${defaultRoles.length} system roles`);
 
+  // Create system organization
+  console.log('🏢 Creating system organization...');
+  const systemOrg = await prisma.organization.upsert({
+    where: { slug: 'system' },
+    update: {},
+    create: {
+      name: 'System',
+      slug: 'system',
+      domain: 'admin',
+      plan: 'enterprise',
+      settings: {
+        isSystem: true,
+        description: 'System organization for platform administration',
+      },
+      branding: {},
+      isActive: true,
+    },
+  });
+  console.log('✅ System organization created');
+
+  // Create super admin user
+  console.log('👑 Creating super admin user...');
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@example.com';
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'changeme123';
+
+  // Hash password
+  const argon2 = require('argon2');
+  const passwordHash = await argon2.hash(superAdminPassword);
+
+  const superAdmin = await prisma.user.upsert({
+    where: { 
+      organizationId_email: {
+        organizationId: systemOrg.id,
+        email: superAdminEmail,
+      }
+    },
+    update: {
+      passwordHash,
+      firstName: 'Super',
+      lastName: 'Admin',
+      emailVerifiedAt: new Date(),
+      isSystem: true,
+    },
+    create: {
+      organizationId: systemOrg.id,
+      email: superAdminEmail,
+      passwordHash,
+      firstName: 'Super',
+      lastName: 'Admin',
+      emailVerifiedAt: new Date(),
+      isSystem: true,
+      preferences: {},
+      metadata: {},
+    },
+  });
+  console.log('✅ Super admin user created');
+
+  // Assign super admin role
+  console.log('🔐 Assigning super admin role...');
+  const superAdminRole = await prisma.role.findFirst({
+    where: {
+      slug: 'super-admin',
+      organizationId: null,
+    },
+  });
+
+  if (superAdminRole) {
+    await prisma.userRole.upsert({
+      where: {
+        userId_roleId_scope_resourceType_resourceId: {
+          userId: superAdmin.id,
+          roleId: superAdminRole.id,
+          scope: 'global',
+          resourceType: 'system',
+          resourceId: systemOrg.id,
+        },
+      },
+      update: {
+        isActive: true,
+      },
+      create: {
+        userId: superAdmin.id,
+        roleId: superAdminRole.id,
+        scope: 'global',
+        resourceType: 'system',
+        resourceId: systemOrg.id,
+        isActive: true,
+        assignedReason: 'System initialization',
+      },
+    });
+    console.log('✅ Super admin role assigned');
+  }
+
   console.log('🎉 Database seed completed!');
+  console.log(`📧 Super Admin Email: ${superAdminEmail}`);
+  console.log(`🔑 Super Admin Password: ${superAdminPassword}`);
+  console.log('⚠️  Please change the super admin password after first login!');
 }
 
 main()

@@ -5,12 +5,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { SubdomainService } from './services/subdomain.service';
 import { CreateOrganizationInput } from './dto/create-organization.input';
 import { UpdateOrganizationInput } from './dto/update-organization.input';
 
 @Injectable()
 export class OrganizationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private subdomainService: SubdomainService,
+  ) {}
 
   async create(createInput: CreateOrganizationInput) {
     // Check if slug already exists
@@ -22,22 +26,34 @@ export class OrganizationsService {
       throw new ConflictException('Organization with this slug already exists');
     }
 
-    // Check if domain already exists (if provided)
-    if (createInput.domain) {
-      const existingByDomain = await this.prisma.organization.findUnique({
-        where: { domain: createInput.domain },
-      });
-
-      if (existingByDomain) {
-        throw new ConflictException('Organization with this domain already exists');
+    // Handle domain/subdomain
+    let domain = createInput.domain;
+    
+    // If no domain provided, generate one from organization name
+    if (!domain) {
+      domain = await this.subdomainService.generateUniqueSubdomain(createInput.name);
+    } else {
+      // Validate provided domain
+      const validation = await this.subdomainService.validateAndReserveSubdomain(domain);
+      if (!validation.isValid) {
+        throw new BadRequestException(validation.error);
       }
+    }
+
+    // Check if domain already exists
+    const existingByDomain = await this.prisma.organization.findUnique({
+      where: { domain },
+    });
+
+    if (existingByDomain) {
+      throw new ConflictException('Organization with this domain already exists');
     }
 
     const organization = await this.prisma.organization.create({
       data: {
         name: createInput.name,
         slug: createInput.slug,
-        domain: createInput.domain,
+        domain,
         plan: createInput.plan || 'free',
         settings: {},
         branding: {},
@@ -193,5 +209,22 @@ export class OrganizationsService {
       settings: restored.settings as Record<string, any>,
       branding: restored.branding as Record<string, any>,
     };
+  }
+
+  // Subdomain-related methods
+  async checkSubdomainAvailability(subdomain: string): Promise<boolean> {
+    return this.subdomainService.checkSubdomainAvailability(subdomain);
+  }
+
+  async getOrganizationBySubdomain(subdomain: string) {
+    return this.subdomainService.getOrganizationBySubdomain(subdomain);
+  }
+
+  async suggestAlternativeSubdomains(subdomain: string): Promise<string[]> {
+    return this.subdomainService.suggestAlternativeSubdomains(subdomain);
+  }
+
+  async validateSubdomain(subdomain: string) {
+    return this.subdomainService.validateSubdomain(subdomain);
   }
 }

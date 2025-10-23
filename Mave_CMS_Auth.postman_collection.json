@@ -353,7 +353,7 @@
                                     "mode": "graphql",
                                     "graphql": {
                                         "query": "mutation Login($input: LoginInput!) {\n  login(input: $input) {\n    accessToken\n    refreshToken\n    requiresTwoFactor\n    twoFactorToken\n    user {\n      id\n      email\n      firstName\n      lastName\n    }\n  }\n}",
-                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"emailOrUsername\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\",\n    \"twoFactorCode\": \"123456\"\n  }\n}"
+                                        "variables": "{\n  \"input\": {\n    \"organizationSlug\": \"{{organizationSlug}}\",\n    \"emailOrUsername\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\",\n    \"twoFactorCode\": \"123456\"\n  }\n}"
                                     }
                                 },
                                 "url": {
@@ -374,7 +374,7 @@
                     "name": "3. Authentication",
                     "item": [
                         {
-                            "name": "Register User",
+                            "name": "Register User with Organization ID",
                             "event": [
                                 {
                                     "listen": "test",
@@ -421,7 +421,54 @@
                             "response": []
                         },
                         {
-                            "name": "Login",
+                            "name": "Register User with Organization Slug",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.register) {",
+                                            "    pm.environment.set('accessToken', response.data.register.accessToken);",
+                                            "    pm.environment.set('refreshToken', response.data.register.refreshToken);",
+                                            "    pm.environment.set('userId', response.data.register.user.id);",
+                                            "    console.log('User registered with slug:', response.data.register.user.email);",
+                                            "    console.log('Access Token saved');",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Register($input: RegisterInput!) {\n  register(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n      firstName\n      lastName\n      organizationId\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationSlug\": \"test-org\",\n    \"email\": \"newuser@test.com\",\n    \"password\": \"SecurePassword123\",\n    \"firstName\": \"New\",\n    \"lastName\": \"User\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Login with Organization ID",
                             "event": [
                                 {
                                     "listen": "test",
@@ -452,6 +499,52 @@
                                     "graphql": {
                                         "query": "mutation Login($input: LoginInput!) {\n  login(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n      firstName\n      lastName\n      lastLoginAt\n    }\n  }\n}",
                                         "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"emailOrUsername\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Login with Organization Slug",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.login) {",
+                                            "    pm.environment.set('accessToken', response.data.login.accessToken);",
+                                            "    pm.environment.set('refreshToken', response.data.login.refreshToken);",
+                                            "    pm.environment.set('userId', response.data.login.user.id);",
+                                            "    console.log('User logged in with slug:', response.data.login.user.email);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Login($input: LoginInput!) {\n  login(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n      firstName\n      lastName\n      lastLoginAt\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationSlug\": \"test-org\",\n    \"emailOrUsername\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\"\n  }\n}"
                                     }
                                 },
                                 "url": {
@@ -590,8 +683,8 @@
                                 "body": {
                                     "mode": "graphql",
                                     "graphql": {
-                                        "query": "mutation RequestPasswordReset($organizationId: String!, $email: String!) {\n  requestPasswordReset(organizationId: $organizationId, email: $email)\n}",
-                                        "variables": "{\n  \"organizationId\": \"{{organizationId}}\",\n  \"email\": \"admin@test.com\"\n}"
+                                        "query": "mutation RequestPasswordReset($organizationSlug: String!, $email: String!) {\n  requestPasswordReset(organizationSlug: $organizationSlug, email: $email)\n}",
+                                        "variables": "{\n  \"organizationSlug\": \"{{organizationSlug}}\",\n  \"email\": \"admin@test.com\"\n}"
                                     }
                                 },
                                 "url": {
@@ -1110,7 +1203,316 @@
                     ]
                 },
                 {
-                    "name": "6. Permission Checking",
+                    "name": "6. Invitations",
+                    "item": [
+                        {
+                            "name": "Invite User by Email",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.inviteUserByEmail) {",
+                                            "    pm.environment.set('invitationId', response.data.inviteUserByEmail.id);",
+                                            "    pm.environment.set('invitationToken', response.data.inviteUserByEmail.token);",
+                                            "    console.log('Invitation ID:', response.data.inviteUserByEmail.id);",
+                                            "    console.log('Invitation Token:', response.data.inviteUserByEmail.token);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation InviteUserByEmail($input: CreateInvitationInput!) {\n  inviteUserByEmail(input: $input) {\n    id\n    email\n    token\n    roleId\n    organizationId\n    invitedBy\n    expiresAt\n    status\n    type\n    createdAt\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"email\": \"invited@example.com\",\n    \"roleId\": \"{{adminRoleId}}\",\n    \"expiresInDays\": 7\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Shareable Invite Link",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.createShareableInviteLink) {",
+                                            "    pm.environment.set('shareableInvitationId', response.data.createShareableInviteLink.id);",
+                                            "    pm.environment.set('shareableInvitationToken', response.data.createShareableInviteLink.token);",
+                                            "    console.log('Shareable Invitation ID:', response.data.createShareableInviteLink.id);",
+                                            "    console.log('Shareable Invitation Token:', response.data.createShareableInviteLink.token);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation CreateShareableInviteLink($input: CreateInvitationInput!) {\n  createShareableInviteLink(input: $input) {\n    id\n    token\n    roleId\n    organizationId\n    invitedBy\n    expiresAt\n    status\n    type\n    maxUses\n    usedCount\n    createdAt\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"roleId\": \"{{adminRoleId}}\",\n    \"maxUses\": 10,\n    \"expiresInDays\": 30\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Validate Invitation Token",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query ValidateInvitationToken($input: ValidateInvitationInput!) {\n  validateInvitationToken(input: $input) {\n    isValid\n    invitation {\n      id\n      email\n      roleId\n      organizationId\n      expiresAt\n      status\n      type\n    }\n    error\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"token\": \"{{invitationToken}}\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Invitation Details",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetInvitation($token: String!) {\n  getInvitation(token: $token) {\n    id\n    email\n    token\n    roleId\n    organizationId\n    invitedBy\n    acceptedBy\n    acceptedAt\n    expiresAt\n    status\n    type\n    maxUses\n    usedCount\n    createdAt\n    organization {\n      id\n      name\n      slug\n    }\n    role {\n      id\n      name\n      slug\n      permissions\n    }\n  }\n}",
+                                        "variables": "{\n  \"token\": \"{{invitationToken}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "List Organization Invitations",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query ListInvitations($input: ListInvitationsInput!) {\n  listInvitations(input: $input) {\n    invitations {\n      id\n      email\n      token\n      roleId\n      organizationId\n      invitedBy\n      acceptedBy\n      acceptedAt\n      expiresAt\n      status\n      type\n      maxUses\n      usedCount\n      createdAt\n    }\n    total\n    hasMore\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"status\": \"pending\",\n    \"skip\": 0,\n    \"take\": 10\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Resend Invitation",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation ResendInvite($input: ResendInvitationInput!) {\n  resendInvite(input: $input)\n}",
+                                        "variables": "{\n  \"input\": {\n    \"invitationId\": \"{{invitationId}}\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Revoke Invitation",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation RevokeInvite($input: RevokeInvitationInput!) {\n  revokeInvite(input: $input)\n}",
+                                        "variables": "{\n  \"input\": {\n    \"invitationId\": \"{{invitationId}}\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Register with Invitation",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.registerWithInvitation) {",
+                                            "    pm.environment.set('invitedUserAccessToken', response.data.registerWithInvitation.accessToken);",
+                                            "    pm.environment.set('invitedUserRefreshToken', response.data.registerWithInvitation.refreshToken);",
+                                            "    pm.environment.set('invitedUserId', response.data.registerWithInvitation.user.id);",
+                                            "    console.log('Invited user registered:', response.data.registerWithInvitation.user.email);",
+                                            "    console.log('Invited user access token saved');",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation RegisterWithInvitation($input: RegisterWithInvitationInput!) {\n  registerWithInvitation(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n      firstName\n      lastName\n      organizationId\n    }\n    invitation {\n      id\n      status\n      acceptedAt\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"token\": \"{{invitationToken}}\",\n    \"email\": \"invited@example.com\",\n    \"password\": \"SecurePassword123\",\n    \"firstName\": \"Invited\",\n    \"lastName\": \"User\",\n    \"username\": \"inviteduser\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "7. Permission Checking",
                     "item": [
                         {
                             "name": "Get User Permissions",
@@ -1238,6 +1640,11 @@
             "type": "string"
         },
         {
+            "key": "organizationSlug",
+            "value": "test-org",
+            "type": "string"
+        },
+        {
             "key": "userId",
             "value": "",
             "type": "string"
@@ -1254,6 +1661,41 @@
         },
         {
             "key": "userRoleId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "invitationId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "invitationToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "shareableInvitationId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "shareableInvitationToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "invitedUserAccessToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "invitedUserRefreshToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "invitedUserId",
             "value": "",
             "type": "string"
         }

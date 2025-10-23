@@ -60,4 +60,3 @@ export class Role {
   @Field(() => Date, { nullable: true })
   deletedAt: Date | null;
 }
-

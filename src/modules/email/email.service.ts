@@ -1,15 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
+
   constructor(
     private mailerService: MailerService,
     private configService: ConfigService,
   ) {}
 
+  /**
+   * Check if mailing service is enabled
+   */
+  private isMailingServiceEnabled(): boolean {
+    const mailingService = this.configService.get<string>('MAILING_SERVICE', 'enabled');
+    return mailingService.toLowerCase() === 'enabled';
+  }
+
+  /**
+   * Log that email sending was skipped due to disabled mailing service
+   */
+  private logSkippedEmail(emailType: string, to: string): void {
+    this.logger.log(
+      `Email sending skipped - Mailing service disabled. Type: ${emailType}, To: ${to}`,
+    );
+  }
+
   async sendWelcomeEmail(to: string, firstName: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Welcome Email', to);
+      return;
+    }
+
     await this.mailerService.sendMail({
       to,
       subject: 'Welcome to Mave CMS!',
@@ -21,11 +45,12 @@ export class EmailService {
     });
   }
 
-  async sendEmailVerification(
-    to: string,
-    firstName: string,
-    verificationToken: string,
-  ) {
+  async sendEmailVerification(to: string, firstName: string, verificationToken: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Email Verification', to);
+      return;
+    }
+
     const verificationUrl = `${this.configService.get('APP_URL')}/verify-email?token=${verificationToken}`;
 
     await this.mailerService.sendMail({
@@ -40,11 +65,12 @@ export class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(
-    to: string,
-    firstName: string,
-    resetToken: string,
-  ) {
+  async sendPasswordResetEmail(to: string, firstName: string, resetToken: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Password Reset', to);
+      return;
+    }
+
     const resetUrl = `${this.configService.get('APP_URL')}/reset-password?token=${resetToken}`;
 
     await this.mailerService.sendMail({
@@ -61,6 +87,11 @@ export class EmailService {
   }
 
   async send2FAEnabledNotification(to: string, firstName: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('2FA Enabled Notification', to);
+      return;
+    }
+
     await this.mailerService.sendMail({
       to,
       subject: '2FA Enabled on Your Account',
@@ -74,6 +105,11 @@ export class EmailService {
   }
 
   async send2FADisabledNotification(to: string, firstName: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('2FA Disabled Notification', to);
+      return;
+    }
+
     await this.mailerService.sendMail({
       to,
       subject: '2FA Disabled on Your Account',
@@ -92,11 +128,16 @@ export class EmailService {
     ipAddress: string,
     timestamp: Date,
   ) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('New Login Notification', to);
+      return;
+    }
+
     try {
       console.log(`Attempting to send new login notification to: ${to}`);
       console.log(`SMTP Host: ${this.configService.get('SMTP_HOST')}`);
       console.log(`SMTP Port: ${this.configService.get('SMTP_PORT')}`);
-      
+
       await this.mailerService.sendMail({
         to,
         subject: 'New Login to Your Account',
@@ -108,7 +149,7 @@ export class EmailService {
           timestamp: timestamp.toLocaleString(),
         },
       });
-      
+
       console.log(`New login notification sent successfully to: ${to}`);
     } catch (error) {
       console.error('Failed to send new login email:', error);
@@ -123,6 +164,11 @@ export class EmailService {
   }
 
   async sendPasswordChangedNotification(to: string, firstName: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Password Changed Notification', to);
+      return;
+    }
+
     await this.mailerService.sendMail({
       to,
       subject: 'Your Password Has Been Changed',
@@ -136,6 +182,11 @@ export class EmailService {
   }
 
   async sendTestEmail(to: string) {
+    if (!this.isMailingServiceEnabled()) {
+      this.logSkippedEmail('Test Email', to);
+      return;
+    }
+
     await this.mailerService.sendMail({
       to,
       subject: 'Mave CMS - Test Email',
@@ -147,4 +198,3 @@ export class EmailService {
     });
   }
 }
-

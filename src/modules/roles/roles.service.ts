@@ -77,9 +77,7 @@ export class RolesService {
   }
 
   async findAll(organizationId?: string, skip = 0, take = 20) {
-    const where = organizationId
-      ? { organizationId, deletedAt: null }
-      : { deletedAt: null };
+    const where = organizationId ? { organizationId, deletedAt: null } : { deletedAt: null };
 
     const [rolesList, total] = await Promise.all([
       this.prisma.role.findMany({
@@ -222,9 +220,7 @@ export class RolesService {
         resourceType: assignInput.resourceType,
         resourceId: assignInput.resourceId,
         conditions: assignInput.conditions || {},
-        expiresAt: assignInput.expiresAt
-          ? new Date(assignInput.expiresAt)
-          : null,
+        expiresAt: assignInput.expiresAt ? new Date(assignInput.expiresAt) : null,
         assignedBy,
         assignedReason: assignInput.assignedReason,
         isActive: assignInput.isActive ?? true,
@@ -296,9 +292,7 @@ export class RolesService {
 
     for (const userRole of userRoles) {
       if (userRole.role.permissions) {
-        userRole.role.permissions.forEach((permission) =>
-          permissions.add(permission),
-        );
+        userRole.role.permissions.forEach((permission) => permissions.add(permission));
       }
 
       // If role has a parent, inherit permissions (will be implemented)
@@ -308,4 +302,3 @@ export class RolesService {
     return Array.from(permissions);
   }
 }
-

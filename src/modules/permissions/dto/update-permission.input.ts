@@ -1,10 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsArray,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsArray } from 'class-validator';
 import { GraphQLJSON } from 'graphql-scalars';
 
 @InputType()
@@ -63,4 +58,3 @@ export class UpdatePermissionInput {
   @IsOptional()
   metadata?: Record<string, any>;
 }
-

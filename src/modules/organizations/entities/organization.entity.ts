@@ -36,4 +36,3 @@ export class Organization {
   @Field(() => Date, { nullable: true })
   deletedAt: Date | null;
 }
-

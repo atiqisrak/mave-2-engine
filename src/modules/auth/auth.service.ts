@@ -48,10 +48,7 @@ export class AuthService {
 
     // Send welcome email
     try {
-      await this.emailService.sendWelcomeEmail(
-        user.email,
-        user.firstName || 'User',
-      );
+      await this.emailService.sendWelcomeEmail(user.email, user.firstName || 'User');
     } catch (error) {
       // Don't fail registration if email fails
       console.error('Failed to send welcome email:', error);
@@ -102,16 +99,11 @@ export class AuthService {
     // Check if account is locked
     const isLocked = await this.usersService.isAccountLocked(user.id);
     if (isLocked) {
-      throw new UnauthorizedException(
-        'Account is locked due to multiple failed login attempts',
-      );
+      throw new UnauthorizedException('Account is locked due to multiple failed login attempts');
     }
 
     // Verify password
-    const isPasswordValid = await argon2.verify(
-      user.passwordHash,
-      loginInput.password,
-    );
+    const isPasswordValid = await argon2.verify(user.passwordHash, loginInput.password);
 
     if (!isPasswordValid) {
       await this.usersService.incrementFailedLoginAttempts(user.id);
@@ -141,10 +133,7 @@ export class AuthService {
       // If TOTP fails, try backup code
       let isValid = isValidTotp;
       if (!isValidTotp) {
-        isValid = await this.twoFactorService.verifyBackupCode(
-          user.id,
-          loginInput.twoFactorCode,
-        );
+        isValid = await this.twoFactorService.verifyBackupCode(user.id, loginInput.twoFactorCode);
       }
 
       if (!isValid) {
@@ -183,12 +172,9 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(
-        refreshToken,
-        {
-          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        },
-      );
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
 
       if (payload.type !== 'refresh') {
         throw new UnauthorizedException('Invalid token type');
@@ -341,4 +327,3 @@ export class AuthService {
     }
   }
 }
-

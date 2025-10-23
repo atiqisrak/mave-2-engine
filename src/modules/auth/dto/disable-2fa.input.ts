@@ -8,4 +8,3 @@ export class Disable2FAInput {
   @IsNotEmpty()
   password: string;
 }
-

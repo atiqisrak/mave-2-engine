@@ -12,4 +12,3 @@ export class AppResolver {
     return 'Welcome to Mave CMS!';
   }
 }
-

@@ -66,4 +66,3 @@ import { EmailModule } from './modules/email/email.module';
   providers: [AppService, AppResolver],
 })
 export class AppModule {}
-

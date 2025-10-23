@@ -1,12 +1,4 @@
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Args,
-  Int,
-  ResolveField,
-  Parent,
-} from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, ResolveField, Parent } from '@nestjs/graphql';
 import { RolesService } from './roles.service';
 import { Role } from './entities/role.entity';
 import { UserRole } from './entities/user-role.entity';
@@ -88,4 +80,3 @@ export class RolesResolver {
     return this.rolesService.getUserPermissions(userId);
   }
 }
-

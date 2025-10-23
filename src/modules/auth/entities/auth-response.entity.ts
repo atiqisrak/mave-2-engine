@@ -18,4 +18,3 @@ export class AuthResponse {
   @Field(() => String, { nullable: true })
   twoFactorToken: string | null;
 }
-

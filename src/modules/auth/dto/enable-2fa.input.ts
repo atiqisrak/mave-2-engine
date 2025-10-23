@@ -8,4 +8,3 @@ export class Enable2FAInput {
   @IsNotEmpty()
   token: string;
 }
-

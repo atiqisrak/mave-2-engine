@@ -11,21 +11,47 @@ import { EmailResolver } from './email.resolver';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
+        const mailingService = configService.get<string>('MAILING_SERVICE', 'enabled');
+
+        // If mailing service is disabled, return a minimal configuration
+        if (mailingService.toLowerCase() !== 'enabled') {
+          console.log('Mailing service is disabled - using mock configuration');
+          return {
+            transport: {
+              host: 'localhost',
+              port: 1025,
+              secure: false,
+              ignoreTLS: true,
+              auth: false,
+            },
+            defaults: {
+              from: 'noreply@mave-cms.local',
+            },
+            template: {
+              dir: join(process.cwd(), 'src/modules/email/templates'),
+              adapter: new HandlebarsAdapter(),
+              options: {
+                strict: false,
+              },
+            },
+          };
+        }
+
         const smtpUser = configService.get('SMTP_USER');
         const smtpPass = configService.get('SMTP_PASS');
         const smtpHost = configService.get('SMTP_HOST', 'localhost');
         const smtpPort = parseInt(configService.get('SMTP_PORT', '1025'));
-        
+
         console.log('Email configuration:', {
           host: smtpHost,
           port: smtpPort,
           user: smtpUser ? '***' : 'not set',
-          hasPassword: !!smtpPass
+          hasPassword: !!smtpPass,
         });
-        
+
         // Configure transport based on host
         const isLocalhost = smtpHost === 'localhost' || smtpHost === '127.0.0.1';
-        
+
         const transportConfig: any = {
           host: smtpHost,
           port: smtpPort,
@@ -91,4 +117,3 @@ import { EmailResolver } from './email.resolver';
   exports: [EmailService],
 })
 export class EmailModule {}
-

@@ -5,4 +5,3 @@ export class BackupCodes {
   @Field(() => [String])
   backupCodes: string[];
 }
-

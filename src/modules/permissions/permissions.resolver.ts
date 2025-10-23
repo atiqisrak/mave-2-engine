@@ -9,9 +9,7 @@ export class PermissionsResolver {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Mutation(() => Permission)
-  createPermission(
-    @Args('input') createInput: CreatePermissionInput,
-  ): Promise<Permission> {
+  createPermission(@Args('input') createInput: CreatePermissionInput): Promise<Permission> {
     return this.permissionsService.create(createInput);
   }
 
@@ -63,10 +61,7 @@ export class PermissionsResolver {
   }
 
   @Query(() => [Permission], { name: 'userPermissionsWithDetails' })
-  getUserPermissionsWithDetails(
-    @Args('userId', { type: () => String }) userId: string,
-  ) {
+  getUserPermissionsWithDetails(@Args('userId', { type: () => String }) userId: string) {
     return this.permissionsService.getUserPermissionsWithDetails(userId);
   }
 }
-

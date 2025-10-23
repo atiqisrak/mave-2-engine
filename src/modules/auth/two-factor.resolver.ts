@@ -23,19 +23,13 @@ export class TwoFactorResolver {
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => TwoFactorEnable)
-  async enable2FA(
-    @CurrentUser() user: any,
-    @Args('input') input: Enable2FAInput,
-  ) {
+  async enable2FA(@CurrentUser() user: any, @Args('input') input: Enable2FAInput) {
     return this.twoFactorService.verifyAndEnable(user.id, input.token);
   }
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => Boolean)
-  async disable2FA(
-    @CurrentUser() user: any,
-    @Args('input') input: Disable2FAInput,
-  ) {
+  async disable2FA(@CurrentUser() user: any, @Args('input') input: Disable2FAInput) {
     const result = await this.twoFactorService.disable(user.id, input.password);
     return result.disabled;
   }
@@ -55,4 +49,3 @@ export class TwoFactorResolver {
     return this.twoFactorService.getStatus(user.id);
   }
 }
-

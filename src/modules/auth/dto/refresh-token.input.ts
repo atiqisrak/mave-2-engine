@@ -8,4 +8,3 @@ export class RefreshTokenInput {
   @IsNotEmpty()
   refreshToken: string;
 }
-

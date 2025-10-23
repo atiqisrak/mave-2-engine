@@ -16,4 +16,3 @@ import { RolesModule } from '../roles/roles.module';
   exports: [PermissionsService],
 })
 export class PermissionsModule {}
-

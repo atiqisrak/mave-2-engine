@@ -32,4 +32,3 @@ export class UpdateOrganizationInput {
   @IsOptional()
   isActive?: boolean;
 }
-

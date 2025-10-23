@@ -7,4 +7,3 @@ import { UsersResolver } from './users.resolver';
   exports: [UsersService],
 })
 export class UsersModule {}
-

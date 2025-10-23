@@ -21,10 +21,7 @@ export class AuthResolver {
 
   @Public()
   @Mutation(() => AuthResponse)
-  async login(
-    @Args('input') loginInput: LoginInput,
-    @Context() context: any,
-  ) {
+  async login(@Args('input') loginInput: LoginInput, @Context() context: any) {
     const ipAddress = context.req?.ip || context.req?.connection?.remoteAddress;
     return this.authService.login(loginInput, ipAddress);
   }
@@ -68,4 +65,3 @@ export class AuthResolver {
     return true;
   }
 }
-

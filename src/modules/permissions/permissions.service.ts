@@ -196,10 +196,7 @@ export class PermissionsService {
   /**
    * Check if a user has all of the specified permissions
    */
-  async checkPermissions(
-    userId: string,
-    permissionSlugs: string[],
-  ): Promise<boolean> {
+  async checkPermissions(userId: string, permissionSlugs: string[]): Promise<boolean> {
     const userPermissions = await this.rolesService.getUserPermissions(userId);
 
     return permissionSlugs.every((slug) => userPermissions.includes(slug));
@@ -208,10 +205,7 @@ export class PermissionsService {
   /**
    * Check if a user has any of the specified permissions
    */
-  async checkAnyPermission(
-    userId: string,
-    permissionSlugs: string[],
-  ): Promise<boolean> {
+  async checkAnyPermission(userId: string, permissionSlugs: string[]): Promise<boolean> {
     const userPermissions = await this.rolesService.getUserPermissions(userId);
 
     return permissionSlugs.some((slug) => userPermissions.includes(slug));
@@ -221,8 +215,7 @@ export class PermissionsService {
    * Get all permissions for a user with details
    */
   async getUserPermissionsWithDetails(userId: string) {
-    const userPermissionSlugs =
-      await this.rolesService.getUserPermissions(userId);
+    const userPermissionSlugs = await this.rolesService.getUserPermissions(userId);
 
     if (userPermissionSlugs.length === 0) {
       return [];
@@ -264,4 +257,3 @@ export class PermissionsService {
     await this.cacheManager.reset();
   }
 }
-

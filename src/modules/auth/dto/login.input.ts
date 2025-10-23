@@ -23,4 +23,3 @@ export class LoginInput {
   @IsOptional()
   twoFactorCode?: string;
 }
-

@@ -11,4 +11,3 @@ export class TwoFactorSecret {
   @Field()
   otpauthUrl: string;
 }
-

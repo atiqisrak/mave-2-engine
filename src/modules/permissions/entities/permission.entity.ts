@@ -57,4 +57,3 @@ export class Permission {
   @Field()
   updatedAt: Date;
 }
-

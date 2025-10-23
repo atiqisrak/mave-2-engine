@@ -33,9 +33,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     // For testing purposes only
-    const models = Reflect.ownKeys(this).filter(
-      (key) => typeof key === 'string' && key[0] !== '_',
-    );
+    const models = Reflect.ownKeys(this).filter((key) => typeof key === 'string' && key[0] !== '_');
 
     return Promise.all(
       models.map((modelKey) => {
@@ -47,4 +45,3 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     );
   }
 }
-

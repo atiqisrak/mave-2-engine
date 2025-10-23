@@ -71,4 +71,3 @@ export class CreateRoleInput {
   @IsOptional()
   isDefault?: boolean;
 }
-

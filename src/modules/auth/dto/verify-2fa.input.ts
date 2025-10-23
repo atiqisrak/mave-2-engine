@@ -13,4 +13,3 @@ export class Verify2FAInput {
   @IsNotEmpty()
   code: string;
 }
-

@@ -56,4 +56,3 @@ export class UsersResolver {
     return this.usersService.restore(id);
   }
 }
-

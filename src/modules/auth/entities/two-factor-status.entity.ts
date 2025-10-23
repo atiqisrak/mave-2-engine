@@ -8,4 +8,3 @@ export class TwoFactorStatus {
   @Field(() => Int)
   backupCodesRemaining: number;
 }
-

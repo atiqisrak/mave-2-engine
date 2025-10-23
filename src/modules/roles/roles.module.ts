@@ -7,4 +7,3 @@ import { RolesResolver } from './roles.resolver';
   exports: [RolesService],
 })
 export class RolesModule {}
-

@@ -45,4 +45,3 @@ export class UserRole {
   @Field()
   createdAt: Date;
 }
-

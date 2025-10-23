@@ -1,11 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsBoolean,
-  IsArray,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsArray } from 'class-validator';
 
 @InputType()
 export class CreatePermissionInput {
@@ -64,4 +58,3 @@ export class CreatePermissionInput {
   @IsOptional()
   requiresApproval?: boolean;
 }
-

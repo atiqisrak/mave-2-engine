@@ -72,4 +72,3 @@ export class User {
   @Field(() => Date, { nullable: true })
   deletedAt: Date | null;
 }
-

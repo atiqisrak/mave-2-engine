@@ -316,9 +316,7 @@ export class UsersService {
 
     // Lock account after 5 failed attempts for 30 minutes
     const lockedUntil =
-      failedAttempts >= 5
-        ? new Date(Date.now() + 30 * 60 * 1000)
-        : user.lockedUntil;
+      failedAttempts >= 5 ? new Date(Date.now() + 30 * 60 * 1000) : user.lockedUntil;
 
     const updated = await this.prisma.user.update({
       where: { id: userId },
@@ -357,4 +355,3 @@ export class UsersService {
     return true;
   }
 }
-

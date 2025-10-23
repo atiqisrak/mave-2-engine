@@ -29,9 +29,7 @@ export class OrganizationsService {
       });
 
       if (existingByDomain) {
-        throw new ConflictException(
-          'Organization with this domain already exists',
-        );
+        throw new ConflictException('Organization with this domain already exists');
       }
     }
 
@@ -133,9 +131,7 @@ export class OrganizationsService {
       });
 
       if (existingByDomain) {
-        throw new ConflictException(
-          'Organization with this domain already exists',
-        );
+        throw new ConflictException('Organization with this domain already exists');
       }
     }
 
@@ -199,4 +195,3 @@ export class OrganizationsService {
     };
   }
 }
-

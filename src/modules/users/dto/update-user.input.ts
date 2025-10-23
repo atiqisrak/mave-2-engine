@@ -57,4 +57,3 @@ export class UpdateUserInput {
   @IsOptional()
   metadata?: Record<string, any>;
 }
-

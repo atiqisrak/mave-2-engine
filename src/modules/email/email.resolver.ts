@@ -7,11 +7,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class EmailResolver {
   constructor(private readonly emailService: EmailService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
   async sendTestEmail(@Args('email') email: string) {
     await this.emailService.sendTestEmail(email);
     return true;
   }
 }
-

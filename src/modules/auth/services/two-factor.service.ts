@@ -90,9 +90,7 @@ export class TwoFactorService {
 
     // Generate backup codes
     const backupCodes = await this.generateBackupCodes();
-    const hashedBackupCodes = await Promise.all(
-      backupCodes.map((code) => argon2.hash(code)),
-    );
+    const hashedBackupCodes = await Promise.all(backupCodes.map((code) => argon2.hash(code)));
 
     // Enable 2FA
     const updatedUser = await this.prisma.user.update({
@@ -157,11 +155,11 @@ export class TwoFactorService {
     // Check each hashed backup code
     for (let i = 0; i < user.twoFactorBackupCodes.length; i++) {
       const isValid = await argon2.verify(user.twoFactorBackupCodes[i], backupCode);
-      
+
       if (isValid) {
         // Remove used backup code
         const remainingCodes = user.twoFactorBackupCodes.filter((_, index) => index !== i);
-        
+
         await this.prisma.user.update({
           where: { id: userId },
           data: {
@@ -245,9 +243,7 @@ export class TwoFactorService {
 
     // Generate new backup codes
     const backupCodes = await this.generateBackupCodes();
-    const hashedBackupCodes = await Promise.all(
-      backupCodes.map((code) => argon2.hash(code)),
-    );
+    const hashedBackupCodes = await Promise.all(backupCodes.map((code) => argon2.hash(code)));
 
     // Update backup codes
     await this.prisma.user.update({
@@ -290,7 +286,7 @@ export class TwoFactorService {
    */
   private async generateBackupCodes(count: number = 8): Promise<string[]> {
     const codes: string[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       // Generate 8-character alphanumeric code
       const code = this.generateRandomCode(8);
@@ -306,7 +302,7 @@ export class TwoFactorService {
   private generateRandomCode(length: number): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous characters
     let code = '';
-    
+
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * chars.length);
       code += chars[randomIndex];
@@ -315,4 +311,3 @@ export class TwoFactorService {
     return code;
   }
 }
-

@@ -9,9 +9,7 @@ export class OrganizationsResolver {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Mutation(() => Organization)
-  createOrganization(
-    @Args('input') createInput: CreateOrganizationInput,
-  ): Promise<Organization> {
+  createOrganization(@Args('input') createInput: CreateOrganizationInput): Promise<Organization> {
     return this.organizationsService.create(createInput);
   }
 
@@ -59,4 +57,3 @@ export class OrganizationsResolver {
     return this.organizationsService.restore(id);
   }
 }
-

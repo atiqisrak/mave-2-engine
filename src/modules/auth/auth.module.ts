@@ -24,14 +24,7 @@ import { EmailModule } from '../email/email.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [
-    AuthResolver,
-    AuthService,
-    TwoFactorService,
-    TwoFactorResolver,
-    JwtStrategy,
-  ],
+  providers: [AuthResolver, AuthService, TwoFactorService, TwoFactorResolver, JwtStrategy],
   exports: [AuthService, TwoFactorService],
 })
 export class AuthModule {}
-

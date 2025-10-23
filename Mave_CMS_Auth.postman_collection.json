@@ -1,0 +1,1261 @@
+{
+    "info": {
+        "name": "Mave CMS v2",
+        "description": "Complete API testing for Mave CMS",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_exporter_id": "mave-cms"
+    },
+    "item": [
+        {
+            "name": "Authentication & Authorization",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "item": [
+                        {
+                            "name": "Health & Hello",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query {\n  health\n  hello\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "1. Organizations",
+                    "item": [
+                        {
+                            "name": "Create Organization",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.createOrganization) {",
+                                            "    pm.environment.set('organizationId', response.data.createOrganization.id);",
+                                            "    console.log('Organization ID:', response.data.createOrganization.id);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation CreateOrganization($input: CreateOrganizationInput!) {\n  createOrganization(input: $input) {\n    id\n    name\n    slug\n    plan\n    isActive\n    createdAt\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"name\": \"Test Organization\",\n    \"slug\": \"test-org\",\n    \"plan\": \"free\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Organization",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetOrganization($id: String!) {\n  organization(id: $id) {\n    id\n    name\n    slug\n    domain\n    plan\n    settings\n    branding\n    isActive\n    createdAt\n  }\n}",
+                                        "variables": "{\n  \"id\": \"{{organizationId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get All Organizations",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetOrganizations {\n  organizations {\n    id\n    name\n    slug\n    plan\n    isActive\n  }\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "2. Two-Factor Authentication",
+                    "item": [
+                        {
+                            "name": "Generate 2FA Secret",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation {\n  generate2FASecret {\n    secret\n    qrCode\n    otpauthUrl\n  }\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Enable 2FA",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Enable2FA($input: Enable2FAInput!) {\n  enable2FA(input: $input) {\n    enabled\n    backupCodes\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"token\": \"123456\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get 2FA Status",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query {\n  twoFactorStatus {\n    enabled\n    backupCodesRemaining\n  }\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Regenerate Backup Codes",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation RegenerateBackupCodes($input: RegenerateBackupCodesInput!) {\n  regenerate2FABackupCodes(input: $input) {\n    backupCodes\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"password\": \"SecurePassword123\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Disable 2FA",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Disable2FA($input: Disable2FAInput!) {\n  disable2FA(input: $input)\n}",
+                                        "variables": "{\n  \"input\": {\n    \"password\": \"SecurePassword123\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Login with 2FA",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.login) {",
+                                            "    if (response.data.login.requiresTwoFactor) {",
+                                            "        pm.environment.set('twoFactorToken', response.data.login.twoFactorToken);",
+                                            "        console.log('2FA required. Use the 2FA code from your authenticator app');",
+                                            "    } else {",
+                                            "        pm.environment.set('accessToken', response.data.login.accessToken);",
+                                            "        pm.environment.set('refreshToken', response.data.login.refreshToken);",
+                                            "        console.log('Login successful with 2FA');",
+                                            "    }",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Login($input: LoginInput!) {\n  login(input: $input) {\n    accessToken\n    refreshToken\n    requiresTwoFactor\n    twoFactorToken\n    user {\n      id\n      email\n      firstName\n      lastName\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"emailOrUsername\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\",\n    \"twoFactorCode\": \"123456\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Authentication",
+                    "item": [
+                        {
+                            "name": "Register User",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.register) {",
+                                            "    pm.environment.set('accessToken', response.data.register.accessToken);",
+                                            "    pm.environment.set('refreshToken', response.data.register.refreshToken);",
+                                            "    pm.environment.set('userId', response.data.register.user.id);",
+                                            "    console.log('User registered:', response.data.register.user.email);",
+                                            "    console.log('Access Token saved');",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Register($input: RegisterInput!) {\n  register(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n      firstName\n      lastName\n      organizationId\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"email\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\",\n    \"firstName\": \"Admin\",\n    \"lastName\": \"User\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Login",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.login) {",
+                                            "    pm.environment.set('accessToken', response.data.login.accessToken);",
+                                            "    pm.environment.set('refreshToken', response.data.login.refreshToken);",
+                                            "    pm.environment.set('userId', response.data.login.user.id);",
+                                            "    console.log('User logged in:', response.data.login.user.email);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation Login($input: LoginInput!) {\n  login(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n      firstName\n      lastName\n      lastLoginAt\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"emailOrUsername\": \"admin@test.com\",\n    \"password\": \"SecurePassword123\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Refresh Token",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.refreshToken) {",
+                                            "    pm.environment.set('accessToken', response.data.refreshToken.accessToken);",
+                                            "    pm.environment.set('refreshToken', response.data.refreshToken.refreshToken);",
+                                            "    console.log('Token refreshed successfully');",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation RefreshToken($input: RefreshTokenInput!) {\n  refreshToken(input: $input) {\n    accessToken\n    refreshToken\n    user {\n      id\n      email\n    }\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"refreshToken\": \"{{refreshToken}}\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Validate Token",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query {\n  validateToken\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Logout",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation {\n  logout\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Request Password Reset",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation RequestPasswordReset($organizationId: String!, $email: String!) {\n  requestPasswordReset(organizationId: $organizationId, email: $email)\n}",
+                                        "variables": "{\n  \"organizationId\": \"{{organizationId}}\",\n  \"email\": \"admin@test.com\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Reset Password",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation ResetPassword($resetToken: String!, $newPassword: String!) {\n  resetPassword(resetToken: $resetToken, newPassword: $newPassword)\n}",
+                                        "variables": "{\n  \"resetToken\": \"YOUR_RESET_TOKEN\",\n  \"newPassword\": \"NewSecurePassword456\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "3. Users",
+                    "item": [
+                        {
+                            "name": "Get User",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetUser($id: String!) {\n  user(id: $id) {\n    id\n    email\n    firstName\n    lastName\n    phone\n    status\n    timezone\n    locale\n    twoFactorEnabled\n    lastLoginAt\n    createdAt\n  }\n}",
+                                        "variables": "{\n  \"id\": \"{{userId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get All Users",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetUsers($organizationId: String!) {\n  users(organizationId: $organizationId) {\n    id\n    email\n    firstName\n    lastName\n    status\n    createdAt\n  }\n}",
+                                        "variables": "{\n  \"organizationId\": \"{{organizationId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update User",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation UpdateUser($id: String!, $input: UpdateUserInput!) {\n  updateUser(id: $id, input: $input) {\n    id\n    email\n    firstName\n    lastName\n    phone\n  }\n}",
+                                        "variables": "{\n  \"id\": \"{{userId}}\",\n  \"input\": {\n    \"firstName\": \"Updated\",\n    \"phone\": \"+1234567890\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "4. Permissions",
+                    "item": [
+                        {
+                            "name": "Get All Permissions",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetPermissions {\n  permissions {\n    id\n    name\n    slug\n    module\n    category\n    riskLevel\n    requiresMfa\n    requiresApproval\n    isActive\n  }\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Permissions by Module",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetPermissionsByModule($module: String!) {\n  permissionsByModule(module: $module) {\n    id\n    name\n    slug\n    category\n    riskLevel\n  }\n}",
+                                        "variables": "{\n  \"module\": \"content\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Permission by Slug",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetPermissionBySlug($slug: String!) {\n  permissionBySlug(slug: $slug) {\n    id\n    name\n    slug\n    description\n    module\n    category\n    riskLevel\n    dependsOn\n    conflictsWith\n  }\n}",
+                                        "variables": "{\n  \"slug\": \"content.create\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Permission",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation CreatePermission($input: CreatePermissionInput!) {\n  createPermission(input: $input) {\n    id\n    name\n    slug\n    module\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"name\": \"Export Content\",\n    \"slug\": \"content.export\",\n    \"module\": \"content\",\n    \"category\": \"action\",\n    \"riskLevel\": \"medium\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "5. Roles",
+                    "item": [
+                        {
+                            "name": "Get All Roles",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.roles && response.data.roles.length > 0) {",
+                                            "    const adminRole = response.data.roles.find(r => r.slug === 'admin');",
+                                            "    if (adminRole) {",
+                                            "        pm.environment.set('adminRoleId', adminRole.id);",
+                                            "        console.log('Admin Role ID:', adminRole.id);",
+                                            "    }",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetRoles {\n  roles {\n    id\n    name\n    slug\n    description\n    permissions\n    color\n    icon\n    priority\n    isSystem\n    isDefault\n  }\n}",
+                                        "variables": ""
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get Role by Slug",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetRoleBySlug($slug: String!) {\n  roleBySlug(organizationId: null, slug: $slug) {\n    id\n    name\n    slug\n    description\n    permissions\n    color\n    isSystem\n  }\n}",
+                                        "variables": "{\n  \"slug\": \"admin\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Custom Role",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.createRole) {",
+                                            "    pm.environment.set('customRoleId', response.data.createRole.id);",
+                                            "    console.log('Custom Role ID:', response.data.createRole.id);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation CreateRole($input: CreateRoleInput!) {\n  createRole(input: $input) {\n    id\n    name\n    slug\n    permissions\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"organizationId\": \"{{organizationId}}\",\n    \"name\": \"Content Manager\",\n    \"slug\": \"content-manager\",\n    \"description\": \"Can manage all content\",\n    \"permissions\": [\n      \"content.view\",\n      \"content.create\",\n      \"content.update\",\n      \"content.delete\"\n    ],\n    \"color\": \"#8B5CF6\",\n    \"icon\": \"file-text\",\n    \"priority\": 40\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Assign Role to User",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "const response = pm.response.json();",
+                                            "if (response.data && response.data.assignRole) {",
+                                            "    pm.environment.set('userRoleId', response.data.assignRole.id);",
+                                            "    console.log('User Role Assignment ID:', response.data.assignRole.id);",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation AssignRole($input: AssignRoleInput!) {\n  assignRole(input: $input) {\n    id\n    userId\n    roleId\n    scope\n    isActive\n    assignedAt\n  }\n}",
+                                        "variables": "{\n  \"input\": {\n    \"userId\": \"{{userId}}\",\n    \"roleId\": \"{{adminRoleId}}\",\n    \"scope\": \"global\"\n  }\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get User Roles",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetUserRoles($userId: String!) {\n  userRoles(userId: $userId) {\n    id\n    roleId\n    scope\n    isActive\n    assignedAt\n  }\n}",
+                                        "variables": "{\n  \"userId\": \"{{userId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Revoke Role",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "mutation RevokeRole($userRoleId: String!) {\n  revokeRole(userRoleId: $userRoleId)\n}",
+                                        "variables": "{\n  \"userRoleId\": \"{{userRoleId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "6. Permission Checking",
+                    "item": [
+                        {
+                            "name": "Get User Permissions",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetUserPermissions($userId: String!) {\n  userPermissions(userId: $userId)\n}",
+                                        "variables": "{\n  \"userId\": \"{{userId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Get User Permissions with Details",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query GetUserPermissionsWithDetails($userId: String!) {\n  userPermissionsWithDetails(userId: $userId) {\n    id\n    name\n    slug\n    module\n    category\n    riskLevel\n  }\n}",
+                                        "variables": "{\n  \"userId\": \"{{userId}}\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Check Single Permission",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{accessToken}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "graphql",
+                                    "graphql": {
+                                        "query": "query CheckPermission($userId: String!, $permissionSlug: String!) {\n  checkPermission(userId: $userId, permissionSlug: $permissionSlug)\n}",
+                                        "variables": "{\n  \"userId\": \"{{userId}}\",\n  \"permissionSlug\": \"content.create\"\n}"
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/graphql",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "graphql"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:7845",
+            "type": "string"
+        },
+        {
+            "key": "accessToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refreshToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "organizationId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "adminRoleId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "customRoleId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userRoleId",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}

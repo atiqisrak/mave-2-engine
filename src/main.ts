@@ -17,6 +17,12 @@ async function bootstrap() {
   // CORS
   const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['*'];
   
+  // Add the server's own origin to allowed origins (for GraphQL Playground, health checks, etc.)
+  const serverOrigin = process.env.APP_URL || `http://localhost:${process.env.PORT || 7845}`;
+  if (!corsOrigins.includes('*') && !corsOrigins.includes(serverOrigin)) {
+    corsOrigins.push(serverOrigin);
+  }
+  
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)

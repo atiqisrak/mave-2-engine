@@ -1,12 +1,23 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { GraphQLJSON } from 'graphql-scalars';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
+import { UserDetails, SafeUser } from './entities/user-details.entity';
+import { UserRoleWithDetails } from './entities/user-role-with-details.entity';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
+import { RolesService } from '../roles/roles.service';
+import { PermissionsService } from '../permissions/permissions.service';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 @Resolver(() => User)
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly rolesService: RolesService,
+    private readonly permissionsService: PermissionsService,
+    private readonly organizationsService: OrganizationsService,
+  ) {}
 
   @Mutation(() => User)
   createUser(@Args('input') createInput: CreateUserInput): Promise<User> {
@@ -54,5 +65,77 @@ export class UsersResolver {
   @Mutation(() => User)
   restoreUser(@Args('id', { type: () => String }) id: string) {
     return this.usersService.restore(id);
+  }
+
+  @Query(() => UserDetails, { name: 'userDetails' })
+  async getUserDetails(@Args('id', { type: () => String }) id: string) {
+    // Get user basic information
+    const user = await this.usersService.findOne(id);
+    
+    // Get user's organization
+    const organization = await this.organizationsService.findOne(user.organizationId);
+    
+    // Get user's roles
+    const userRoles = await this.rolesService.getUserRoles(id);
+    
+    // Get user's permissions
+    const userPermissions = await this.rolesService.getUserPermissions(id);
+    
+    // Get detailed permissions
+    const detailedPermissions = await this.permissionsService.getUserPermissionsWithDetails(id);
+    
+    // Create safe user object without sensitive fields
+    const safeUser: SafeUser = {
+      id: user.id,
+      organizationId: user.organizationId,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      emailVerifiedAt: user.emailVerifiedAt,
+      twoFactorEnabled: user.twoFactorEnabled,
+      lastLoginAt: user.lastLoginAt,
+      lastLoginIp: user.lastLoginIp,
+      lastActivityAt: user.lastActivityAt,
+      status: user.status,
+      isSystem: user.isSystem,
+      timezone: user.timezone,
+      locale: user.locale,
+      preferences: user.preferences,
+      metadata: user.metadata,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt,
+    };
+    
+    // Transform roles to include nested role data
+    const rolesWithDetails: UserRoleWithDetails[] = userRoles.map((userRole: any) => ({
+      id: userRole.id,
+      userId: userRole.userId,
+      roleId: userRole.roleId,
+      scope: userRole.scope,
+      resourceType: userRole.resourceType,
+      resourceId: userRole.resourceId,
+      conditions: userRole.conditions,
+      startsAt: userRole.startsAt,
+      expiresAt: userRole.expiresAt,
+      assignedBy: userRole.assignedBy,
+      assignedReason: userRole.assignedReason,
+      assignedAt: userRole.assignedAt,
+      isActive: userRole.isActive,
+      createdAt: userRole.createdAt,
+      role: userRole.role,
+    }));
+    
+    return {
+      user: safeUser,
+      organization,
+      roles: rolesWithDetails,
+      permissions: userPermissions,
+      detailedPermissions,
+    };
   }
 }

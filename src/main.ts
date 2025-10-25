@@ -16,6 +16,8 @@ async function bootstrap() {
 
   // CORS
   const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['*'];
+  const baseDomain = process.env.BASE_DOMAIN || 'localhost';
+  const isDevelopment = process.env.NODE_ENV !== 'production';
   
   // Add the server's own origin to allowed origins (for GraphQL Playground, health checks, etc.)
   const serverOrigin = process.env.APP_URL || `http://localhost:${process.env.PORT || 7845}`;
@@ -30,6 +32,11 @@ async function bootstrap() {
       
       // Check if origin is in the allowed list
       if (corsOrigins.includes('*') || corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow wildcard subdomain origins in development
+      if (isDevelopment && origin.includes(baseDomain)) {
         return callback(null, true);
       }
       

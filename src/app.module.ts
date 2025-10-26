@@ -11,15 +11,6 @@ import { AppService } from './app.service';
 import { AppResolver } from './app.resolver';
 import { SubdomainMiddleware } from './common/middleware/subdomain.middleware';
 
-// Feature Modules
-import { OrganizationsModule } from './modules/organizations/organizations.module';
-import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { RolesModule } from './modules/roles/roles.module';
-import { PermissionsModule } from './modules/permissions/permissions.module';
-import { EmailModule } from './modules/email/email.module';
-import { InvitationsModule } from './modules/invitations/invitations.module';
-
 @Module({
   imports: [
     // Configuration
@@ -57,13 +48,7 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
     ]),
 
     // Feature Modules
-    EmailModule,
-    OrganizationsModule,
-    UsersModule,
-    AuthModule,
-    RolesModule,
-    PermissionsModule,
-    InvitationsModule,
+    // TODO: Add Content module, Webhooks module, Forms module when implemented
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver, SubdomainMiddleware],

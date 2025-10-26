@@ -14,7 +14,12 @@ export class SuperAdminGuard implements CanActivate {
       throw new ForbiddenException('Authentication required');
     }
 
-    const userId = request.user.sub;
+    // Get user ID from either 'id' or 'sub' property
+    const userId = request.user.id || request.user.sub;
+    
+    if (!userId) {
+      throw new ForbiddenException('User ID not found');
+    }
     
     // Check if user has super admin role
     const userRole = await this.prisma.userRole.findFirst({
@@ -24,6 +29,7 @@ export class SuperAdminGuard implements CanActivate {
         role: {
           slug: 'super-admin',
           isSystem: true,
+          deletedAt: null,
         },
       },
       include: {

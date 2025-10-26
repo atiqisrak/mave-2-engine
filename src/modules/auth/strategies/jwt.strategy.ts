@@ -23,12 +23,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token type');
     }
 
-    const user = await this.authService.validateUser(payload.sub);
+    try {
+      const user = await this.authService.validateUser(payload.sub);
 
-    return {
-      id: user.id,
-      email: user.email,
-      organizationId: user.organizationId,
-    };
+      return {
+        id: user.id,
+        email: user.email,
+        organizationId: user.organizationId,
+      };
+    } catch (error) {
+      throw new UnauthorizedException(`Failed to validate user: ${error.message}`);
+    }
   }
 }

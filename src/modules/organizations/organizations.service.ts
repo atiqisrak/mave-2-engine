@@ -84,7 +84,9 @@ export class OrganizationsService {
         include: {
           _count: {
             select: {
-              users: true,
+              users: {
+                where: { deletedAt: null },
+              },
             },
           },
         },

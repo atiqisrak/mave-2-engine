@@ -81,6 +81,13 @@ export class OrganizationsService {
     const [orgs, total] = await Promise.all([
       this.prisma.organization.findMany({
         where: { deletedAt: null },
+        include: {
+          _count: {
+            select: {
+              users: true,
+            },
+          },
+        },
         skip,
         take,
         orderBy: { createdAt: 'desc' },

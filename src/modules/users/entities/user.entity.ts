@@ -2,6 +2,18 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-scalars';
 
 @ObjectType()
+export class UserOrganization {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  slug: string;
+}
+
+@ObjectType()
 export class User {
   @Field(() => ID)
   id: string;
@@ -71,4 +83,7 @@ export class User {
 
   @Field(() => Date, { nullable: true })
   deletedAt: Date | null;
+
+  @Field(() => UserOrganization, { nullable: true })
+  organization?: UserOrganization;
 }

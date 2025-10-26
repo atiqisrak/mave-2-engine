@@ -2,6 +2,12 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-scalars';
 
 @ObjectType()
+export class OrganizationCount {
+  @Field(() => Number)
+  users: number;
+}
+
+@ObjectType()
 export class Organization {
   @Field(() => ID)
   id: string;
@@ -35,4 +41,7 @@ export class Organization {
 
   @Field(() => Date, { nullable: true })
   deletedAt: Date | null;
+
+  @Field(() => OrganizationCount, { nullable: true })
+  _count?: OrganizationCount;
 }

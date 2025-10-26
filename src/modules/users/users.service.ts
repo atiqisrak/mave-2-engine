@@ -106,6 +106,41 @@ export class UsersService {
     return { users, total };
   }
 
+  async findAllUsers(skip = 0, take = 100) {
+    const [usersList, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where: {
+          deletedAt: null,
+        },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    const users = usersList.map((user) => ({
+      ...user,
+      preferences: user.preferences as Record<string, any>,
+      metadata: user.metadata as Record<string, any>,
+    }));
+
+    return { users, total };
+  }
+
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },

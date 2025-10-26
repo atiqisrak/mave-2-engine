@@ -1,314 +1,204 @@
-// Mave CMS - Database Schema
-// PostgreSQL 16+ with Prisma ORM
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
-
-// ============================================
-// MULTI-TENANCY
-// ============================================
 
 model Organization {
-    id     String  @id @default(uuid()) @db.Uuid
-    name   String
-    slug   String  @unique
-    domain String? @unique
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String       @unique
+  domain      String?      @unique
+  plan        String       @default("free")
+  settings    Json         @default("{}")
+  branding    Json         @default("{}")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+  invitations Invitation[]
+  roles       Role[]
+  users       User[]
 
-    // Subscription
-    plan     String @default("free")
-    settings Json   @default("{}")
-    branding Json   @default("{}")
-
-    // Status
-    isActive Boolean @default(true) @map("is_active")
-
-    // Timestamps
-    createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime  @updatedAt @map("updated_at")
-    deletedAt DateTime? @map("deleted_at")
-
-    // Relations
-    users       User[]
-    roles       Role[]
-    invitations Invitation[]
-
-    @@map("organizations")
+  @@map("organizations")
 }
-
-// ============================================
-// USERS & AUTHENTICATION
-// ============================================
 
 model User {
-    id             String @id @default(uuid()) @db.Uuid
-    organizationId String @map("organization_id") @db.Uuid
+  id                     String       @id @default(uuid()) @db.Uuid
+  organizationId         String       @map("organization_id") @db.Uuid
+  email                  String
+  username               String?
+  passwordHash           String       @map("password_hash")
+  firstName              String?      @map("first_name")
+  lastName               String?      @map("last_name")
+  phone                  String?
+  avatarUrl              String?      @map("avatar_url")
+  bio                    String?
+  emailVerifiedAt        DateTime?    @map("email_verified_at")
+  emailVerificationToken String?      @map("email_verification_token")
+  twoFactorEnabled       Boolean      @default(false) @map("two_factor_enabled")
+  twoFactorSecret        String?      @map("two_factor_secret")
+  twoFactorBackupCodes   String[]     @map("two_factor_backup_codes")
+  passwordResetToken     String?      @map("password_reset_token")
+  passwordResetExpiresAt DateTime?    @map("password_reset_expires_at")
+  failedLoginAttempts    Int          @default(0) @map("failed_login_attempts")
+  lockedUntil            DateTime?    @map("locked_until")
+  lastLoginAt            DateTime?    @map("last_login_at")
+  lastLoginIp            String?      @map("last_login_ip")
+  lastActivityAt         DateTime?    @map("last_activity_at")
+  status                 String       @default("active")
+  isSystem               Boolean      @default(false) @map("is_system")
+  timezone               String       @default("UTC")
+  locale                 String       @default("en")
+  preferences            Json         @default("{}")
+  metadata               Json         @default("{}")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+  deletedAt              DateTime?    @map("deleted_at")
+  invitationsAccepted    Invitation[] @relation("AcceptedBy")
+  invitationsSent        Invitation[] @relation("InvitedBy")
+  userRoles              UserRole[]
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-    // Identity
-    email        String
-    username     String?
-    passwordHash String  @map("password_hash")
-
-    // Profile
-    firstName String? @map("first_name")
-    lastName  String? @map("last_name")
-    phone     String?
-    avatarUrl String? @map("avatar_url")
-    bio       String? @db.Text
-
-    // Security
-    emailVerifiedAt        DateTime? @map("email_verified_at")
-    emailVerificationToken String?   @map("email_verification_token")
-
-    // 2FA
-    twoFactorEnabled     Boolean  @default(false) @map("two_factor_enabled")
-    twoFactorSecret      String?  @map("two_factor_secret")
-    twoFactorBackupCodes String[] @map("two_factor_backup_codes")
-
-    // Password Reset
-    passwordResetToken     String?   @map("password_reset_token")
-    passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
-
-    // Account Security
-    failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
-    lockedUntil         DateTime? @map("locked_until")
-    lastLoginAt         DateTime? @map("last_login_at")
-    lastLoginIp         String?   @map("last_login_ip")
-    lastActivityAt      DateTime? @map("last_activity_at")
-
-    // Status
-    status   String  @default("active")
-    isSystem Boolean @default(false) @map("is_system")
-
-    // Preferences
-    timezone    String @default("UTC")
-    locale      String @default("en")
-    preferences Json   @default("{}")
-
-    // Metadata
-    metadata Json @default("{}")
-
-    // Timestamps
-    createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime  @updatedAt @map("updated_at")
-    deletedAt DateTime? @map("deleted_at")
-
-    // Relations
-    organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    userRoles           UserRole[]
-    invitationsSent     Invitation[] @relation("InvitedBy")
-    invitationsAccepted Invitation[] @relation("AcceptedBy")
-
-    @@unique([organizationId, email])
-    @@unique([organizationId, username])
-    @@index([organizationId])
-    @@index([email])
-    @@index([status])
-    @@map("users")
+  @@unique([organizationId, email])
+  @@unique([organizationId, username])
+  @@index([organizationId])
+  @@index([email])
+  @@index([status])
+  @@map("users")
 }
-
-// ============================================
-// RBAC (Role-Based Access Control)
-// ============================================
 
 model Role {
-    id             String  @id @default(uuid()) @db.Uuid
-    organizationId String? @map("organization_id") @db.Uuid
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @map("organization_id") @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  parentRoleId   String?       @map("parent_role_id") @db.Uuid
+  level          Int           @default(0)
+  roleType       String        @default("custom") @map("role_type")
+  isSystem       Boolean       @default(false) @map("is_system")
+  isAssignable   Boolean       @default(true) @map("is_assignable")
+  isDefault      Boolean       @default(false) @map("is_default")
+  permissions    String[]      @default([])
+  color          String?       @db.VarChar(20)
+  icon           String?       @db.VarChar(50)
+  priority       Int           @default(0)
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userRoles      UserRole[]
 
-    // Identity
-    name        String
-    slug        String
-    description String? @db.Text
-
-    // Hierarchy
-    parentRoleId String? @map("parent_role_id") @db.Uuid
-    level        Int     @default(0)
-
-    // Type
-    roleType     String  @default("custom") @map("role_type")
-    isSystem     Boolean @default(false) @map("is_system")
-    isAssignable Boolean @default(true) @map("is_assignable")
-    isDefault    Boolean @default(false) @map("is_default")
-
-    // Permissions (array of permission slugs)
-    permissions String[] @default([])
-
-    // UI
-    color    String? @db.VarChar(20)
-    icon     String? @db.VarChar(50)
-    priority Int     @default(0)
-
-    // Metadata
-    metadata Json @default("{}")
-
-    // Timestamps
-    createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime  @updatedAt @map("updated_at")
-    deletedAt DateTime? @map("deleted_at")
-
-    // Relations
-    organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    userRoles    UserRole[]
-
-    @@unique([organizationId, slug])
-    @@index([organizationId])
-    @@index([slug])
-    @@index([isDefault])
-    @@map("roles")
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([slug])
+  @@index([isDefault])
+  @@map("roles")
 }
 
-// User Roles (Many-to-Many with context)
 model UserRole {
-    id     String @id @default(uuid()) @db.Uuid
-    userId String @map("user_id") @db.Uuid
-    roleId String @map("role_id") @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  roleId         String    @map("role_id") @db.Uuid
+  scope          String    @default("global")
+  resourceType   String?   @map("resource_type")
+  resourceId     String?   @map("resource_id") @db.Uuid
+  conditions     Json      @default("{}")
+  startsAt       DateTime  @default(now()) @map("starts_at")
+  expiresAt      DateTime? @map("expires_at")
+  assignedBy     String?   @map("assigned_by") @db.Uuid
+  assignedReason String?   @map("assigned_reason")
+  assignedAt     DateTime  @default(now()) @map("assigned_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  role           Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // Scope
-    scope        String  @default("global")
-    resourceType String? @map("resource_type")
-    resourceId   String? @map("resource_id") @db.Uuid
-
-    // Conditions
-    conditions Json @default("{}") @db.JsonB
-
-    // Temporal
-    startsAt  DateTime  @default(now()) @map("starts_at")
-    expiresAt DateTime? @map("expires_at")
-
-    // Assignment info
-    assignedBy     String?  @map("assigned_by") @db.Uuid
-    assignedReason String?  @map("assigned_reason") @db.Text
-    assignedAt     DateTime @default(now()) @map("assigned_at")
-
-    // Status
-    isActive Boolean @default(true) @map("is_active")
-
-    createdAt DateTime @default(now()) @map("created_at")
-
-    // Relations
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-    role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-    @@unique([userId, roleId, scope, resourceType, resourceId])
-    @@index([userId, isActive])
-    @@index([roleId, isActive])
-    @@index([expiresAt])
-    @@map("user_roles")
+  @@unique([userId, roleId, scope, resourceType, resourceId])
+  @@index([userId, isActive])
+  @@index([roleId, isActive])
+  @@index([expiresAt])
+  @@map("user_roles")
 }
-
-// ============================================
-// INVITATIONS
-// ============================================
 
 model Invitation {
-    id             String    @id @default(uuid()) @db.Uuid
-    organizationId String    @map("organization_id") @db.Uuid
-    email          String? // null for shareable links
-    token          String    @unique
-    roleId         String?   @map("role_id") @db.Uuid // role to assign on acceptance
-    invitedBy      String    @map("invited_by") @db.Uuid
-    acceptedBy     String?   @map("accepted_by") @db.Uuid
-    acceptedAt     DateTime? @map("accepted_at")
-    expiresAt      DateTime  @map("expires_at")
-    status         String    @default("pending") // pending, accepted, expired, revoked
-    type           String    @default("email") // email, link
-    maxUses        Int?      @map("max_uses") // for shareable links
-    usedCount      Int       @default(0) @map("used_count")
-    metadata       Json      @default("{}")
-    createdAt      DateTime  @default(now()) @map("created_at")
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  email          String?
+  token          String       @unique
+  roleId         String?      @map("role_id") @db.Uuid
+  invitedBy      String       @map("invited_by") @db.Uuid
+  acceptedBy     String?      @map("accepted_by") @db.Uuid
+  acceptedAt     DateTime?    @map("accepted_at")
+  expiresAt      DateTime     @map("expires_at")
+  status         String       @default("pending")
+  type           String       @default("email")
+  maxUses        Int?         @map("max_uses")
+  usedCount      Int          @default(0) @map("used_count")
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  accepter       User?        @relation("AcceptedBy", fields: [acceptedBy], references: [id])
+  inviter        User         @relation("InvitedBy", fields: [invitedBy], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-    // Relations
-    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-    inviter      User         @relation("InvitedBy", fields: [invitedBy], references: [id])
-    accepter     User?        @relation("AcceptedBy", fields: [acceptedBy], references: [id])
-
-    @@index([organizationId, status])
-    @@index([token])
-    @@index([email, status])
-    @@map("invitations")
+  @@index([organizationId, status])
+  @@index([token])
+  @@index([email, status])
+  @@map("invitations")
 }
 
-// Permissions (System-wide)
 model Permission {
-    id String @id @default(uuid()) @db.Uuid
+  id               String   @id @default(uuid()) @db.Uuid
+  name             String   @unique
+  slug             String   @unique
+  description      String?
+  module           String
+  category         String?
+  permissionType   String   @default("action") @map("permission_type")
+  dependsOn        String[] @default([]) @map("depends_on")
+  conflictsWith    String[] @default([]) @map("conflicts_with")
+  riskLevel        String   @default("low") @map("risk_level")
+  requiresMfa      Boolean  @default(false) @map("requires_mfa")
+  requiresApproval Boolean  @default(false) @map("requires_approval")
+  isSystem         Boolean  @default(false) @map("is_system")
+  isActive         Boolean  @default(true) @map("is_active")
+  isDeprecated     Boolean  @default(false) @map("is_deprecated")
+  metadata         Json     @default("{}")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-    // Identity
-    name        String  @unique
-    slug        String  @unique
-    description String? @db.Text
-
-    // Categorization
-    module   String
-    category String?
-
-    // Type
-    permissionType String @default("action") @map("permission_type")
-
-    // Dependencies
-    dependsOn     String[] @default([]) @map("depends_on")
-    conflictsWith String[] @default([]) @map("conflicts_with")
-
-    // Risk & Security
-    riskLevel        String  @default("low") @map("risk_level")
-    requiresMfa      Boolean @default(false) @map("requires_mfa")
-    requiresApproval Boolean @default(false) @map("requires_approval")
-
-    // Status
-    isSystem     Boolean @default(false) @map("is_system")
-    isActive     Boolean @default(true) @map("is_active")
-    isDeprecated Boolean @default(false) @map("is_deprecated")
-
-    // Metadata
-    metadata Json @default("{}")
-
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
-
-    @@index([module])
-    @@index([slug])
-    @@index([isActive, isDeprecated])
-    @@map("permissions")
+  @@index([module])
+  @@index([slug])
+  @@index([isActive, isDeprecated])
+  @@map("permissions")
 }
-
-// ============================================
-// AUDIT LOGGING
-// ============================================
 
 model ActivityLog {
-    id             String  @id @default(uuid()) @db.Uuid
-    organizationId String? @map("organization_id") @db.Uuid
-    userId         String? @map("user_id") @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  action         String
+  entityType     String?  @map("entity_type")
+  entityId       String?  @map("entity_id") @db.Uuid
+  entityName     String?  @map("entity_name")
+  changes        Json?
+  previousValues Json?    @map("previous_values")
+  newValues      Json?    @map("new_values")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  sessionId      String?  @map("session_id")
+  requestId      String?  @map("request_id")
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
 
-    // Action
-    action     String
-    entityType String? @map("entity_type")
-    entityId   String? @map("entity_id") @db.Uuid
-    entityName String? @map("entity_name")
-
-    // Changes
-    changes        Json? @db.JsonB
-    previousValues Json? @map("previous_values") @db.JsonB
-    newValues      Json? @map("new_values") @db.JsonB
-
-    // Context
-    ipAddress String? @map("ip_address")
-    userAgent String? @map("user_agent") @db.Text
-    sessionId String? @map("session_id")
-    requestId String? @map("request_id")
-
-    // Metadata
-    metadata Json @default("{}")
-
-    createdAt DateTime @default(now()) @map("created_at")
-
-    @@index([userId, createdAt])
-    @@index([organizationId, createdAt])
-    @@index([entityType, entityId])
-    @@index([action])
-    @@map("activity_log")
+  @@index([userId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@map("activity_log")
 }

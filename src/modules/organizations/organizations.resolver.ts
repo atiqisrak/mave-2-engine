@@ -1,8 +1,11 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { Organization } from './entities/organization.entity';
 import { CreateOrganizationInput } from './dto/create-organization.input';
 import { UpdateOrganizationInput } from './dto/update-organization.input';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SuperAdminGuard } from '../auth/guards/super-admin.guard';
 
 @Resolver(() => Organization)
 export class OrganizationsResolver {
@@ -14,6 +17,7 @@ export class OrganizationsResolver {
   }
 
   @Query(() => [Organization], { name: 'organizations' })
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
   async findAll(
     @Args('skip', { type: () => Int, nullable: true, defaultValue: 0 })
     skip: number,

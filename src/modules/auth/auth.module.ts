@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,15 +7,17 @@ import { AuthResolver } from './auth.resolver';
 import { TwoFactorService } from './services/two-factor.service';
 import { TwoFactorResolver } from './two-factor.resolver';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SuperAdminGuard } from './guards/super-admin.guard';
 import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     EmailModule,
-    OrganizationsModule,
+    forwardRef(() => OrganizationsModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,8 +28,8 @@ import { OrganizationsModule } from '../organizations/organizations.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthResolver, AuthService, TwoFactorService, TwoFactorResolver, JwtStrategy],
-  exports: [AuthService, TwoFactorService],
+  providers: [AuthResolver, AuthService, TwoFactorService, TwoFactorResolver, JwtStrategy, JwtAuthGuard, SuperAdminGuard],
+  exports: [AuthService, TwoFactorService, JwtAuthGuard, SuperAdminGuard],
 })
 export class AuthModule {
   // Dynamic module to export guards

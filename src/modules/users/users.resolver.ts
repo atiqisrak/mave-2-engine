@@ -1,4 +1,5 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { GraphQLJSON } from 'graphql-scalars';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
@@ -9,6 +10,8 @@ import { UpdateUserInput } from './dto/update-user.input';
 import { RolesService } from '../roles/roles.service';
 import { PermissionsService } from '../permissions/permissions.service';
 import { OrganizationsService } from '../organizations/organizations.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SuperAdminGuard } from '../auth/guards/super-admin.guard';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -33,6 +36,18 @@ export class UsersResolver {
     take: number,
   ) {
     const result = await this.usersService.findAll(organizationId, skip, take);
+    return result.users;
+  }
+
+  @Query(() => [User], { name: 'allUsers' })
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  async findAllUsers(
+    @Args('skip', { type: () => Int, nullable: true, defaultValue: 0 })
+    skip: number,
+    @Args('take', { type: () => Int, nullable: true, defaultValue: 100 })
+    take: number,
+  ) {
+    const result = await this.usersService.findAllUsers(skip, take);
     return result.users;
   }
 

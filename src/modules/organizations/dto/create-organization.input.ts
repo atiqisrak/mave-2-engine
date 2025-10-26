@@ -1,5 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsString, IsOptional, IsNotEmpty, Matches } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, Matches, IsBoolean } from 'class-validator';
 
 @InputType()
 export class CreateOrganizationInput {
@@ -20,6 +20,16 @@ export class CreateOrganizationInput {
   @IsString()
   @IsOptional()
   domain?: string;
+
+  @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
+  customSubdomain?: string;
+
+  @Field({ nullable: true, defaultValue: true })
+  @IsBoolean()
+  @IsOptional()
+  autoGenerateSubdomain?: boolean;
 
   @Field({ nullable: true })
   @IsString()

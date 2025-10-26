@@ -29,11 +29,21 @@ export class OrganizationsService {
     // Handle domain/subdomain
     let domain = createInput.domain;
     
-    // If no domain provided, generate one from organization name
+    // If no explicit domain provided, check for custom subdomain or auto-generate
     if (!domain) {
-      domain = await this.subdomainService.generateUniqueSubdomain(createInput.name);
+      if (createInput.customSubdomain) {
+        // User provided a custom subdomain
+        const validation = await this.subdomainService.validateAndReserveSubdomain(createInput.customSubdomain);
+        if (!validation.isValid) {
+          throw new BadRequestException(validation.error);
+        }
+        domain = createInput.customSubdomain;
+      } else if (createInput.autoGenerateSubdomain !== false) {
+        // Auto-generate from organization name (default behavior)
+        domain = await this.subdomainService.generateUniqueSubdomain(createInput.name);
+      }
     } else {
-      // Validate provided domain
+      // Validate explicitly provided domain
       const validation = await this.subdomainService.validateAndReserveSubdomain(domain);
       if (!validation.isValid) {
         throw new BadRequestException(validation.error);

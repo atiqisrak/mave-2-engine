@@ -9,11 +9,13 @@ import { TwoFactorResolver } from './two-factor.resolver';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
 
 @Module({
   imports: [
     UsersModule,
     EmailModule,
+    OrganizationsModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -27,4 +29,13 @@ import { EmailModule } from '../email/email.module';
   providers: [AuthResolver, AuthService, TwoFactorService, TwoFactorResolver, JwtStrategy],
   exports: [AuthService, TwoFactorService],
 })
-export class AuthModule {}
+export class AuthModule {
+  // Dynamic module to export guards
+  static forFeature() {
+    return {
+      module: AuthModule,
+      providers: [AuthService],
+      exports: [AuthService],
+    };
+  }
+}

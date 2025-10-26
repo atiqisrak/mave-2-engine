@@ -16,6 +16,7 @@ A modern, scalable, enterprise-grade headless CMS built with NestJS, GraphQL, an
 ### Core Features
 
 - ✅ **Multi-Tenancy** - Full organization isolation
+- ✅ **Subdomain Routing** - Each organization gets its own subdomain (e.g., `acme.xyz.com`)
 - ✅ **Advanced RBAC/ABAC** - Role & Attribute-Based Access Control
 - ✅ **Flexible Content Modeling** - Create any content structure
 - ✅ **GraphQL & REST APIs** - Choose your preferred API style

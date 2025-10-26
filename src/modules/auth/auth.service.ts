@@ -12,6 +12,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { UsersService } from '../users/users.service';
 import { TwoFactorService } from './services/two-factor.service';
 import { EmailService } from '../email/email.service';
+import { SubdomainService } from '../organizations/services/subdomain.service';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
 import { RegisterWithOrganizationInput } from './dto/register-with-organization.input';
@@ -25,6 +26,7 @@ export class AuthService {
     private usersService: UsersService,
     private twoFactorService: TwoFactorService,
     private emailService: EmailService,
+    private subdomainService: SubdomainService,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
@@ -63,6 +65,16 @@ export class AuthService {
       throw new NotFoundException('Organization not found');
     }
 
+    // Check email domain match
+    let emailDomainMatch = false;
+    if (organization.domain) {
+      const emailCheck = this.subdomainService.validateEmailDomainMatch(
+        registerInput.email,
+        organization.domain
+      );
+      emailDomainMatch = emailCheck.matches;
+    }
+
     // Create user
     const user = await this.usersService.create({
       organizationId: organizationId,
@@ -87,6 +99,7 @@ export class AuthService {
     return {
       ...tokens,
       user,
+      emailDomainMatch,
     };
   }
 

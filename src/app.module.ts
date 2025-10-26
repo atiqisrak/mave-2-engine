@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppResolver } from './app.resolver';
+import { SubdomainMiddleware } from './common/middleware/subdomain.middleware';
 
 // Feature Modules
 import { OrganizationsModule } from './modules/organizations/organizations.module';
@@ -65,6 +66,12 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
     InvitationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppResolver],
+  providers: [AppService, AppResolver, SubdomainMiddleware],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(SubdomainMiddleware)
+      .forRoutes('*'); // Apply to all routes
+  }
+}

@@ -9,6 +9,7 @@ export class SubdomainService {
     'blog', 'docs', 'help', 'support', 'status', 'monitor', 'dev', 'staging',
     'test', 'demo', 'beta', 'alpha', 'preview', 'sandbox', 'playground'
   ];
+  private readonly baseDomain: string;
 
   constructor(
     private prisma: PrismaService,
@@ -19,6 +20,9 @@ export class SubdomainService {
     if (additionalReserved) {
       this.reservedSubdomains.push(...additionalReserved.split(',').map(s => s.trim()));
     }
+    
+    // Load base domain from config
+    this.baseDomain = this.configService.get<string>('BASE_DOMAIN') || 'localhost';
   }
 
   /**
@@ -204,5 +208,85 @@ export class SubdomainService {
       isValid: true,
       subdomain,
     };
+  }
+
+  /**
+   * Extract subdomain from hostname
+   */
+  extractSubdomainFromHost(hostname: string): string | null {
+    if (!hostname) return null;
+
+    // Remove port if present (e.g., localhost:9614)
+    let hostWithoutPort = hostname.split(':')[0];
+    
+    // Handle www subdomain
+    if (hostWithoutPort.startsWith('www.')) {
+      hostWithoutPort = hostWithoutPort.slice(4);
+    }
+
+    // For localhost subdomains (e.g., ethertech.localhost)
+    if (this.baseDomain === 'localhost') {
+      // Check if it's a subdomain like ethertech.localhost
+      if (hostWithoutPort.endsWith('.localhost')) {
+        const subdomain = hostWithoutPort.replace('.localhost', '');
+        // Make sure it's not just "localhost"
+        if (subdomain && subdomain !== 'localhost') {
+          return subdomain;
+        }
+      }
+      return null;
+    }
+
+    // Check if this is a subdomain of our base domain
+    const baseDomainPattern = new RegExp(`\\.${this.baseDomain.replace(/\./g, '\\.')}$`);
+    if (!baseDomainPattern.test(hostWithoutPort)) {
+      return null;
+    }
+
+    // Extract subdomain
+    const subdomain = hostWithoutPort.replace(baseDomainPattern, '');
+    
+    return subdomain || null;
+  }
+
+  /**
+   * Check if email domain matches organization subdomain
+   */
+  validateEmailDomainMatch(email: string, organizationSubdomain: string): {
+    matches: boolean;
+    emailDomain: string;
+    suggestion?: string;
+  } {
+    if (!email || !email.includes('@')) {
+      return { matches: false, emailDomain: '' };
+    }
+
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    
+    // Extract main domain from email (e.g., "user@mail.acme.com" -> "acme")
+    const emailDomainParts = emailDomain.split('.');
+    const emailMainDomain = emailDomainParts.length >= 2 
+      ? emailDomainParts[emailDomainParts.length - 2] 
+      : emailDomainParts[0];
+
+    const matches = emailMainDomain === organizationSubdomain;
+
+    if (!matches) {
+      return {
+        matches: false,
+        emailDomain,
+        suggestion: `${email.split('@')[0]}@${organizationSubdomain}.${this.baseDomain}`,
+      };
+    }
+
+    return { matches: true, emailDomain };
+  }
+
+  /**
+   * Get the full subdomain URL
+   */
+  getSubdomainUrl(subdomain: string): string {
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    return `${protocol}://${subdomain}.${this.baseDomain}`;
   }
 }
